@@ -32,7 +32,7 @@ def main():
     from trellis2.pipelines import Trellis2ImageTo3DPipeline
 
     log("STAGE: loading")
-    log("Loading TRELLIS.2 pipeline (first run downloads weights)...")
+    log("Loading TRELLIS.2 pipeline (weights cached after first run)...")
     pipeline = Trellis2ImageTo3DPipeline.from_pretrained("microsoft/TRELLIS.2-4B")
     pipeline.to("cuda")
 
