@@ -52,16 +52,19 @@ class MainWindow(QMainWindow):
 
     def _warmup_wsl(self):
         def _go():
-            # Direct wsl.exe call, no bash -lic: the -i (interactive) flag
-            # can hang without a TTY, and warmup needs no shell features.
+            # Do NOT capture output here: wsl.exe deadlocks with piped
+            # stdout/stderr while the VM is cold-booting. DEVNULL avoids it.
+            # We just need the VM up; output is irrelevant for warmup.
             try:
                 proc = subprocess.run(
                     [self.runner.wsl_exe, "-d", self.runner.distro,
-                     "-e", "echo", "wsl-ready"],
-                    capture_output=True, text=True, timeout=60,
-                    errors="replace",
+                     "-e", "true"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL,
+                    timeout=120,
                 )
-                ok = proc.returncode == 0 and "wsl-ready" in proc.stdout
+                ok = proc.returncode == 0
             except Exception:
                 ok = False
             # update the status bar back on the GUI thread
