@@ -1,8 +1,10 @@
 """
 Scryware 3D Studio - main window.
 """
+import threading
+
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QMessageBox, QLabel
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 
 from gui.generate_tab import GenerateTab
 from gui.rig_tab import RigTab
@@ -41,7 +43,31 @@ class MainWindow(QMainWindow):
         self.gen_tab.model_ready.connect(self.on_model_ready)
 
         distro = self.runner.distro if self.runner else "none"
-        self.statusBar().showMessage(f"WSL distro: {distro}")
+        self.statusBar().showMessage(f"WSL distro: {distro} — warming up...")
+        # Warm up WSL at launch (in a thread) so the VM is already booted
+        # by the time the user hits Generate. First boot takes 10-30s.
+        if self.runner:
+            QTimer.singleShot(500, self._warmup_wsl)
+
+    def _warmup_wsl(self):
+        def _go():
+            try:
+                rc, out = self.runner.run_simple("echo wsl-ready", timeout=120)
+                ok = rc == 0 and "wsl-ready" in out
+            except Exception:
+                ok = False
+            # update the status bar back on the GUI thread
+            QTimer.singleShot(0, lambda: self._warmup_done(ok))
+
+        threading.Thread(target=_go, daemon=True).start()
+
+    def _warmup_done(self, ok):
+        distro = self.runner.distro if self.runner else "none"
+        if ok:
+            self.statusBar().showMessage(f"WSL distro: {distro} — ready")
+        else:
+            self.statusBar().showMessage(
+                f"WSL distro: {distro} — warmup failed, will boot on first run")
 
     def on_model_ready(self, win_path):
         if win_path:
