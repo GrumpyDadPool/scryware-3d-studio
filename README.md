@@ -37,6 +37,11 @@ python main.py
 - Administrator rights (WSL install needs it)
 - Stable internet — ~35 GB of downloads (PyTorch, model weights)
 - 30-60 minutes
+- **HuggingFace account with the TRELLIS.2 license accepted**: visit
+  https://huggingface.co/microsoft/TRELLIS.2 in your browser and approve the
+  license *before* installing. The weight download fails without this and the
+  error message won't tell you why. The installer will ask for your HF token
+  so the download can authenticate.
 
 ### Manual install (if you prefer)
 

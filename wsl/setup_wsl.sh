@@ -30,6 +30,27 @@ export PATH="$HOME/miniconda3/bin:$PATH"
 # shellcheck disable=SC1091
 source "$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || true
 
+# ---------- HuggingFace auth (gated model weights) ----------
+# TRELLIS.2 weights are gated: you must accept the license at
+# https://huggingface.co/microsoft/TRELLIS.2 in a browser first,
+# then provide a token so the download can authenticate.
+echo "--- HuggingFace authentication ---"
+if [ -n "${HF_TOKEN:-}" ]; then
+    echo "Using HF_TOKEN from environment."
+    conda run -n trellis2 huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
+else
+    echo "If you have a HuggingFace token, paste it now (Enter to skip;"
+    echo "gated weight downloads will fail without it):"
+    read -rs HF_TOKEN_INPUT || true
+    echo ""
+    if [ -n "${HF_TOKEN_INPUT:-}" ]; then
+        conda run -n trellis2 huggingface-cli login --token "$HF_TOKEN_INPUT" \
+            --add-to-git-credential || echo "WARNING: HF login failed"
+    else
+        echo "Skipped. Run 'conda run -n trellis2 huggingface-cli login' later if needed."
+    fi
+fi
+
 # ---------- TRELLIS.2 ----------
 if [ ! -d "$HOME/miniconda3/TRELLIS.2" ]; then
     echo "--- cloning TRELLIS.2 ---"
