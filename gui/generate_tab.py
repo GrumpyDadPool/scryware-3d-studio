@@ -50,6 +50,8 @@ def stage_for_tqdm(desc):
 class GenerateTab(QWidget):
     # emitted with the Windows path of a finished .glb
     model_ready = pyqtSignal(str)
+    # thread-safe log delivery: pump thread emits, GUI thread appends
+    _log_line = pyqtSignal(str)
 
     def __init__(self, runner=None, parent=None):
         super().__init__(parent)
@@ -58,7 +60,44 @@ class GenerateTab(QWidget):
         self.input_path = ""
         self.output_dir = os.path.join(os.path.expanduser("~"), "Documents", "Scryware3D")
         self.result_path = ""
+        # batch log lines and flush to the widget on a timer so a tqdm
+        # flood (hundreds of lines/sec) doesn't overwhelm Qt's paint engine
+        self._log_batch = []
+        self._log_line.connect(self._queue_log_line)
+        from PyQt6.QtCore import QTimer
+        self._log_timer = QTimer(self)
+        self._log_timer.timeout.connect(self._flush_log_batch)
+        self._log_timer.start(150)
         self._build_ui()
+
+    def _queue_log_line(self, line):
+        self._log_batch.append(line)
+
+    def _flush_log_batch(self):
+        if not self._log_batch:
+            return
+        batch, self._log_batch = self._log_batch, []
+        # collapse redundant tqdm progress updates, keep the last per bar
+        collapsed = []
+        last_pct = {}
+        for line in batch:
+            m = TQDM_RE.match(line)
+            if m:
+                last_pct[m.group(1)] = line
+            else:
+                collapsed.append(line)
+        collapsed.extend(last_pct.values())
+        for line in collapsed:
+            self.append_log(line)
+            self._parse_progress(line)
+        # keep the widget from growing unbounded
+        doc = self.log.document()
+        if doc.blockCount() > 2000:
+            cursor = self.log.textCursor()
+            cursor.movePosition(cursor.MoveMode.Start)
+            cursor.movePosition(cursor.MoveMode.Down, cursor.MoveMode.KeepAnchor,
+                                doc.blockCount() - 2000)
+            cursor.removeSelectedText()
 
     # ---------- UI ----------
     def _build_ui(self):
@@ -245,8 +284,8 @@ class GenerateTab(QWidget):
         self.gen_btn.setEnabled(False)
 
         def on_line(line):
-            self.append_log(line)
-            self._parse_progress(line)
+            # thread-safe: signal marshals to the GUI thread
+            self._log_line.emit(line)
 
         def on_done(rc):
             self.proc = None

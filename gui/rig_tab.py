@@ -6,6 +6,7 @@ SkinTokens is not installed yet -> the tab shows setup guidance until it is.
 """
 import os
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog,
     QTextEdit, QProgressBar, QGroupBox,
@@ -23,6 +24,8 @@ RIG_CMD_TEMPLATE = (
 
 
 class RigTab(QWidget):
+    _log_line = pyqtSignal(str)
+
     def __init__(self, runner=None, parent=None):
         super().__init__(parent)
         self.runner = runner
@@ -30,7 +33,30 @@ class RigTab(QWidget):
         self.input_path = ""
         self.output_dir = os.path.join(os.path.expanduser("~"), "Documents", "Scryware3D")
         self.skintokens_ready = False
+        self._log_batch = []
+        self._log_line.connect(self._queue_log_line)
+        from PyQt6.QtCore import QTimer
+        self._log_timer = QTimer(self)
+        self._log_timer.timeout.connect(self._flush_log_batch)
+        self._log_timer.start(150)
         self._build_ui()
+
+    def _queue_log_line(self, line):
+        self._log_batch.append(line)
+
+    def _flush_log_batch(self):
+        if not self._log_batch:
+            return
+        batch, self._log_batch = self._log_batch, []
+        for line in batch:
+            self.log.append(line)
+        doc = self.log.document()
+        if doc.blockCount() > 2000:
+            cursor = self.log.textCursor()
+            cursor.movePosition(cursor.MoveMode.Start)
+            cursor.movePosition(cursor.MoveMode.Down, cursor.MoveMode.KeepAnchor,
+                                doc.blockCount() - 2000)
+            cursor.removeSelectedText()
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -142,7 +168,7 @@ class RigTab(QWidget):
         self.rig_btn.setEnabled(False)
 
         def on_line(line):
-            self.log.append(line)
+            self._log_line.emit(line)
 
         def on_done(rc):
             self.proc = None
