@@ -13,6 +13,7 @@ from PyQt6.QtGui import QPixmap, QDesktopServices
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog,
     QComboBox, QSpinBox, QProgressBar, QTextEdit, QGroupBox, QSplitter,
+    QCheckBox,
 )
 
 from backend.wsl_bridge import win_to_wsl, sh_escape
@@ -145,6 +146,18 @@ class GenerateTab(QWidget):
         row3.addStretch(1)
         form.addLayout(row3)
 
+        row4 = QHBoxLayout()
+        self.nobg_check = QCheckBox("Remove background (white) before generating")
+        self.nobg_check.setChecked(True)
+        self.nobg_check.setToolTip(
+            "Strips the image background and composites the subject on white. "
+            "Dark subjects on dark backgrounds confuse the 3D model into "
+            "producing a flat pancake — leave this on unless your input "
+            "already has a clean, contrasting background.")
+        row4.addWidget(self.nobg_check)
+        row4.addStretch(1)
+        form.addLayout(row4)
+
         self.gen_btn = QPushButton("Generate 3D model")
         self.gen_btn.setMinimumHeight(40)
         self.gen_btn.clicked.connect(self.start_generate)
@@ -227,6 +240,44 @@ class GenerateTab(QWidget):
             self.output_dir = d
             self.out_label.setText(d)
 
+    def _preprocess_input(self, input_path):
+        """Strip background and composite subject on white.
+
+        Returns the path to use for generation (original or preprocessed).
+        Dark subjects on dark backgrounds give TRELLIS.2 no depth signal
+        and it outputs a flat textured pancake — white gives max contrast.
+        """
+        if not self.nobg_check.isChecked():
+            return input_path
+        try:
+            from rembg import remove
+            from PIL import Image
+        except ImportError:
+            self.append_log("rembg not installed — using image as-is "
+                            "(pip install rembg for auto background removal).")
+            return input_path
+        try:
+            self.append_log("Removing background (compositing on white)...")
+            img = Image.open(input_path).convert("RGBA")
+            fg = remove(img)
+            white = Image.new("RGB", fg.size, (255, 255, 255))
+            white.paste(fg, mask=fg.split()[3])
+            out = os.path.join(os.path.expanduser("~"), "Documents", "Scryware3D",
+                               "_nobg_preview.png")
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            white.save(out)
+            # show the user what the model will see
+            pix = QPixmap(out).scaled(
+                160, 160, Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self.thumb.setPixmap(pix)
+            self.append_log("Background removed.")
+            return out
+        except Exception as e:
+            self.append_log(f"Background removal failed ({e}) — using image as-is.")
+            return input_path
+
     def append_log(self, line):
         self.log.append(line)
 
@@ -264,7 +315,8 @@ class GenerateTab(QWidget):
             if not ok:
                 self.append_log("WARNING: could not deploy runner script to WSL.")
 
-        in_wsl = win_to_wsl(self.input_path)
+        self.log.clear()
+        in_wsl = win_to_wsl(self._preprocess_input(self.input_path))
         out_wsl = win_to_wsl(out_win)
         ptype = self.quality.currentData()
         seed = self.seed.value()
@@ -279,7 +331,6 @@ class GenerateTab(QWidget):
             f"--pipeline-type {sh_escape(ptype)} --seed {seed}"
         )
         self.append_log(f"$ {cmd}")
-        self.log.clear()
         self.set_progress(0, "Starting...")
         self.gen_btn.setEnabled(False)
 
