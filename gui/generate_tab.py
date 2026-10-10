@@ -109,6 +109,8 @@ class GenerateTab(QWidget):
         self.gen_btn = QPushButton("Generate 3D model")
         self.gen_btn.setMinimumHeight(40)
         self.gen_btn.clicked.connect(self.start_generate)
+        self.gen_btn.setEnabled(False)
+        self.gen_btn.setToolTip("Waiting for WSL to boot...")
         form.addWidget(self.gen_btn)
         top.addLayout(form, 1)
         root.addLayout(top)
@@ -155,6 +157,16 @@ class GenerateTab(QWidget):
     # ---------- actions ----------
     def set_runner(self, runner):
         self.runner = runner
+
+    def set_wsl_ready(self, ready):
+        """Called by the main window when WSL warmup finishes."""
+        self.gen_btn.setEnabled(ready)
+        self.gen_btn.setToolTip(
+            "" if ready else "Waiting for WSL to boot...")
+        if ready:
+            self.status.setText("Idle.")
+        else:
+            self.status.setText("WSL not ready.")
 
     def pick_image(self):
         path, _ = QFileDialog.getOpenFileName(

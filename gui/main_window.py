@@ -68,6 +68,8 @@ class MainWindow(QMainWindow):
         else:
             self.statusBar().showMessage(
                 f"WSL distro: {distro} — warmup failed, will boot on first run")
+        self.gen_tab.set_wsl_ready(ok)
+        self.rig_tab.set_wsl_ready(ok)
 
     def on_model_ready(self, win_path):
         if win_path:

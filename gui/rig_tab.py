@@ -82,6 +82,14 @@ class RigTab(QWidget):
         self.runner = runner
         self.check_skintokens()
 
+    def set_wsl_ready(self, ready):
+        """Called by the main window when WSL warmup finishes."""
+        if ready:
+            self.check_skintokens()
+        else:
+            self.sk_status.setText("WSL not ready.")
+            self.rig_btn.setEnabled(False)
+
     def set_input(self, win_path):
         """Called when the Generate tab finishes a model."""
         if win_path and os.path.exists(win_path):
