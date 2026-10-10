@@ -76,15 +76,25 @@ class WslRunner:
         self.home = self._detect_home()
 
     def _detect_home(self):
-        try:
-            out = subprocess.run(
-                [self.wsl_exe, "-d", self.distro, "-e", "bash", "-lic", "echo $HOME"],
-                capture_output=True, text=True, timeout=15, errors="replace",
-            ).stdout.strip()
-            if out.startswith("/"):
-                return out
-        except Exception:
-            pass
+        # Try simple non-interactive shells; login/interactive flags (-li)
+        # let .bashrc/conda-init output pollute the result, so avoid them.
+        cmds = [
+            [self.wsl_exe, "-d", self.distro, "-e", "bash", "-c", "echo $HOME"],
+            [self.wsl_exe, "-d", self.distro, "-e", "sh", "-c", "echo $HOME"],
+        ]
+        for cmd in cmds:
+            try:
+                out = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=15,
+                    errors="replace",
+                ).stdout.replace("\x00", "")
+                # take the last non-empty line in case of stray output
+                lines = [ln.strip() for ln in out.split("\n") if ln.strip()]
+                home = lines[-1] if lines else ""
+                if home.startswith("/") and " " not in home:
+                    return home
+            except Exception:
+                continue
         return "/home/user"  # fallback; expand_wsl still works structurally
 
     def expand_wsl(self, path):
