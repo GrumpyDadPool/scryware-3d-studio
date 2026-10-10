@@ -73,6 +73,7 @@ def _excepthook(exc_type, exc_value, exc_tb):
     traceback.print_exception(exc_type, exc_value, exc_tb)
 
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 
@@ -84,6 +85,10 @@ def main():
     sys.excepthook = _excepthook
     app = QApplication(sys.argv)
     app.setApplicationName("Scryware 3D Studio")
+    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "assets", "icon.ico")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     win = MainWindow()
     win.show()
     sys.exit(app.exec())
