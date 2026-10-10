@@ -92,7 +92,7 @@ class WslRunner:
         for cmd in cmds:
             try:
                 out = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=15,
+                    cmd, capture_output=True, text=True, encoding="utf-8", timeout=15,
                     errors="replace",
                 ).stdout.replace("\x00", "")
                 # take the last non-empty line in case of stray output
@@ -130,7 +130,7 @@ class WslRunner:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
+            text=True, encoding="utf-8",
             bufsize=1,
             errors="replace",
         )
@@ -166,7 +166,7 @@ class WslRunner:
         ]
         try:
             proc = subprocess.run(
-                cmd, capture_output=True, text=True,
+                cmd, capture_output=True, text=True, encoding="utf-8",
                 timeout=timeout, errors="replace",
             )
             return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
@@ -187,7 +187,7 @@ class WslRunner:
         ]
         proc = subprocess.run(
             cmd, input=local_text, capture_output=True,
-            text=True, timeout=60, errors="replace",
+            text=True, encoding="utf-8", timeout=60, errors="replace",
         )
         return proc.returncode == 0
 
