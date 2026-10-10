@@ -42,6 +42,9 @@ python main.py
   license *before* installing. The weight download fails without this and the
   error message won't tell you why. The installer will ask for your HF token
   so the download can authenticate.
+- Optional: [BRIA-RMBG 2.0](https://huggingface.co/briaai/RMBG-2.0) access
+  (request it on the model page) — a higher-quality background removal model.
+  The app's background removal works out of the box without it.
 
 ### Manual install (if you prefer)
 
