@@ -49,7 +49,29 @@ def main():
 
     log("STAGE: exporting")
     log(f"Exporting to {args.output_glb}")
-    mesh.export(args.output_glb)
+
+    # MeshWithVoxel -> GLB via o_voxel (official TRELLIS.2 export path)
+    import o_voxel
+    try:
+        mesh.simplify(16777216)  # nvdiffrast limit, per official example
+    except Exception:
+        pass
+    glb = o_voxel.postprocess.to_glb(
+        vertices=mesh.vertices,
+        faces=mesh.faces,
+        attr_volume=mesh.attrs,
+        coords=mesh.coords,
+        attr_layout=mesh.layout,
+        voxel_size=mesh.voxel_size,
+        aabb=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]],
+        decimation_target=1000000,
+        texture_size=4096,
+        remesh=True,
+        remesh_band=1,
+        remesh_project=0,
+        verbose=True,
+    )
+    glb.export(args.output_glb, extension_webp=True)
 
     # Report stats for the GUI
     try:
