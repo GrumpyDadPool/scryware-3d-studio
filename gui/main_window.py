@@ -5,12 +5,17 @@ import subprocess
 import threading
 
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QMessageBox, QLabel
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 
 from gui.generate_tab import GenerateTab
 from gui.rig_tab import RigTab
 from gui.animate_tab import AnimateTab
 from backend.wsl_bridge import WslRunner, _session_log_path
+
+
+class _WarmupSignals(QObject):
+    """Carries the warmup result from the worker thread to the GUI thread."""
+    done = pyqtSignal(bool)
 
 
 class MainWindow(QMainWindow):
@@ -47,6 +52,8 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"WSL distro: {distro} — warming up...")
         # Warm up WSL at launch (in a thread) so the VM is already booted
         # by the time the user hits Generate. First boot takes 10-30s.
+        self._warmup_signals = _WarmupSignals()
+        self._warmup_signals.done.connect(self._warmup_done)
         if self.runner:
             QTimer.singleShot(500, self._warmup_wsl)
 
@@ -90,8 +97,10 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 _wlog(f"EXCEPTION: {type(e).__name__}: {e}")
                 ok = False
-            # update the status bar back on the GUI thread
-            QTimer.singleShot(0, lambda: self._warmup_done(ok))
+            # Signal back to the GUI thread (thread-safe; QTimer.singleShot
+            # from a worker thread never fires - no event loop there).
+            _wlog(f"emitting done signal ok={ok}")
+            self._warmup_signals.done.emit(ok)
 
         _wlog("thread starting")
         threading.Thread(target=_go, daemon=True).start()
