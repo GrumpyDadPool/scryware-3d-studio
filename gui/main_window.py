@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, QTimer
 from gui.generate_tab import GenerateTab
 from gui.rig_tab import RigTab
 from gui.animate_tab import AnimateTab
-from backend.wsl_bridge import WslRunner
+from backend.wsl_bridge import WslRunner, _session_log_path
 
 
 class MainWindow(QMainWindow):
@@ -51,25 +51,49 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(500, self._warmup_wsl)
 
     def _warmup_wsl(self):
-        def _go():
-            # Do NOT capture output here: wsl.exe deadlocks with piped
-            # stdout/stderr while the VM is cold-booting. DEVNULL avoids it.
-            # We just need the VM up; output is irrelevant for warmup.
+        def _wlog(msg):
             try:
-                proc = subprocess.run(
-                    [self.runner.wsl_exe, "-d", self.runner.distro,
-                     "-e", "true"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    timeout=120,
-                )
-                ok = proc.returncode == 0
+                from datetime import datetime
+                ts = datetime.now().strftime("%H:%M:%S")
+                with open(_session_log_path(), "a", encoding="utf-8",
+                          errors="replace") as f:
+                    f.write(f"[warmup {ts}] {msg}\n")
             except Exception:
+                pass
+
+        def _go():
+            # Do NOT capture output via pipes: wsl.exe deadlocks with piped
+            # stdout/stderr while the VM is cold-booting. Redirect to the
+            # session log file instead (file redirect is safe, pipes are not).
+            _wlog("starting")
+            try:
+                cmd = [self.runner.wsl_exe, "-d", self.runner.distro,
+                       "-e", "true"]
+                _wlog(f"cmd: {' '.join(cmd)}")
+                log_path = _session_log_path()
+                with open(log_path, "a", encoding="utf-8",
+                           errors="replace") as lf:
+                    lf.write(f"[warmup] launching wsl.exe...\n")
+                    lf.flush()
+                    proc = subprocess.run(
+                        cmd,
+                        stdout=lf,
+                        stderr=subprocess.STDOUT,
+                        stdin=subprocess.DEVNULL,
+                        timeout=120,
+                    )
+                _wlog(f"done rc={proc.returncode}")
+                ok = proc.returncode == 0
+            except subprocess.TimeoutExpired:
+                _wlog("TIMEOUT after 120s")
+                ok = False
+            except Exception as e:
+                _wlog(f"EXCEPTION: {type(e).__name__}: {e}")
                 ok = False
             # update the status bar back on the GUI thread
             QTimer.singleShot(0, lambda: self._warmup_done(ok))
 
+        _wlog("thread starting")
         threading.Thread(target=_go, daemon=True).start()
 
     def _warmup_done(self, ok):
