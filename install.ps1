@@ -53,10 +53,12 @@ WHAT YOU NEED BEFORE YOU CLICK INSTALL
 [ ] Administrator rights on this PC (WSL install needs it)
 [ ] Stable internet: ~35 GB of downloads (PyTorch, model weights)
 [ ] 30-60 minutes of unattended time
-[ ] HuggingFace account + accepted the TRELLIS.2 model license:
-    visit https://huggingface.co/microsoft/TRELLIS.2 in your browser
-    and click through the license approval BEFORE installing.
-    (The weight download fails without this, and the error is cryptic.)
+[ ] HuggingFace account + accepted the gated model licenses:
+    - https://huggingface.co/microsoft/TRELLIS.2
+    - https://huggingface.co/facebook/dinov3-vit7b16-pretrain-sat493m
+    Visit both in your browser and click through the license approvals
+    BEFORE installing. The weight downloads fail without these, and the
+    errors are cryptic.
 
 APPROVALS THIS INSTALLER WILL ASK FOR
 - UAC elevation for WSL feature install (Windows will prompt you)
