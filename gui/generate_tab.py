@@ -230,9 +230,12 @@ class GenerateTab(QWidget):
         ptype = self.quality.currentData()
         seed = self.seed.value()
 
+        # Use the conda env's python directly instead of `conda run`:
+        # no shell init needed, immune to PATH/login-shell issues.
+        env_python = f"{self.runner.home}/miniconda3/envs/{CONDA_ENV}/bin/python"
         cmd = (
             f"cd {TRELLIS_WSL_DIR} && "
-            f"conda run -n {CONDA_ENV} python {RUNNER_WSL_PATH} "
+            f"{sh_escape(env_python)} {RUNNER_WSL_PATH} "
             f"{sh_escape(in_wsl)} {sh_escape(out_wsl)} "
             f"--pipeline-type {sh_escape(ptype)} --seed {seed}"
         )
