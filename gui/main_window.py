@@ -1,6 +1,7 @@
 """
 Scryware 3D Studio - main window.
 """
+import subprocess
 import threading
 
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QMessageBox, QLabel
@@ -51,9 +52,16 @@ class MainWindow(QMainWindow):
 
     def _warmup_wsl(self):
         def _go():
+            # Direct wsl.exe call, no bash -lic: the -i (interactive) flag
+            # can hang without a TTY, and warmup needs no shell features.
             try:
-                rc, out = self.runner.run_simple("echo wsl-ready", timeout=120)
-                ok = rc == 0 and "wsl-ready" in out
+                proc = subprocess.run(
+                    [self.runner.wsl_exe, "-d", self.runner.distro,
+                     "-e", "echo", "wsl-ready"],
+                    capture_output=True, text=True, timeout=60,
+                    errors="replace",
+                )
+                ok = proc.returncode == 0 and "wsl-ready" in proc.stdout
             except Exception:
                 ok = False
             # update the status bar back on the GUI thread

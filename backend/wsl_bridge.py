@@ -124,7 +124,7 @@ class WslRunner:
         cmd = [
             self.wsl_exe, "-d", self.distro,
             "--cd", self.expand_wsl(workdir),
-            "-e", "bash", "-lic", bash_cmd,
+            "-e", "bash", "-lc", bash_cmd,
         ]
         proc = subprocess.Popen(
             cmd,
@@ -162,7 +162,7 @@ class WslRunner:
         cmd = [
             self.wsl_exe, "-d", self.distro,
             "--cd", self.expand_wsl(workdir),
-            "-e", "bash", "-lic", bash_cmd,
+            "-e", "bash", "-lc", bash_cmd,
         ]
         try:
             proc = subprocess.run(
@@ -183,7 +183,7 @@ class WslRunner:
         dest = self.expand_wsl(wsl_dest)
         cmd = [
             self.wsl_exe, "-d", self.distro,
-            "-e", "bash", "-lic", f"cat > {sh_escape(dest)}",
+            "-e", "bash", "-lc", f"cat > {sh_escape(dest)}",
         ]
         proc = subprocess.run(
             cmd, input=local_text, capture_output=True,
