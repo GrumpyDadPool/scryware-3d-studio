@@ -27,3 +27,5 @@ desktop.ini
 
 # App runtime (outputs go to ~/Documents/Scryware3D, not here)
 *.log
+# Session log written next to main.py at runtime
+scryware-3d-studio.log

@@ -11,6 +11,13 @@ import subprocess
 import threading
 
 
+def _session_log_path():
+    """Same session log file main.py writes to (lives next to main.py)."""
+    # backend/wsl_bridge.py -> parent dir is the app root
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                         "scryware-3d-studio.log")
+
+
 def find_wsl_exe():
     """Locate wsl.exe."""
     for candidate in ("wsl.exe", r"C:\Windows\System32\wsl.exe"):
@@ -131,8 +138,17 @@ class WslRunner:
         def pump():
             try:
                 for line in proc.stdout:
+                    stripped = line.rstrip("\n")
+                    # Mirror WSL process output to the session log file so
+                    # crashes can be diagnosed after the window is gone.
+                    try:
+                        with open(_session_log_path(), "a", encoding="utf-8",
+                                  errors="replace") as f:
+                            f.write(f"[wsl] {stripped}\n")
+                    except Exception:
+                        pass
                     if on_line:
-                        on_line(line.rstrip("\n"))
+                        on_line(stripped)
             finally:
                 proc.wait()
                 if on_done:
