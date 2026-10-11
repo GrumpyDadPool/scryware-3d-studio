@@ -136,7 +136,9 @@ class GenerateTab(QWidget):
         row3.addWidget(QLabel("Quality:"))
         self.quality = QComboBox()
         self.quality.addItem("Fast (512)", "512")
+        self.quality.addItem("Medium (1024)", "1024")
         self.quality.addItem("High (1024 cascade)", "1024_cascade")
+        self.quality.addItem("Ultra (1536 cascade)", "1536_cascade")
         row3.addWidget(self.quality)
         row3.addWidget(QLabel("Seed:"))
         self.seed = QSpinBox()
@@ -157,6 +159,43 @@ class GenerateTab(QWidget):
         row4.addWidget(self.nobg_check)
         row4.addStretch(1)
         form.addLayout(row4)
+
+        # --- mesh options ---
+        mesh_box = QGroupBox("Mesh output")
+        mesh_form = QVBoxLayout(mesh_box)
+
+        mesh_row1 = QHBoxLayout()
+        mesh_row1.addWidget(QLabel("Density:"))
+        self.density = QComboBox()
+        self.density.addItem("Game-ready (25k faces)", 25000)
+        self.density.addItem("High (100k faces)", 100000)
+        self.density.addItem("Sculpt (1M faces)", 1000000)
+        self.density.setToolTip(
+            "Target face count for the output mesh. Game-ready suits "
+            "real-time engines; Sculpt keeps maximum detail for Blender cleanup.")
+        mesh_row1.addWidget(self.density)
+        mesh_row1.addWidget(QLabel("Texture:"))
+        self.texsize = QComboBox()
+        self.texsize.addItem("1024", 1024)
+        self.texsize.addItem("2048", 2048)
+        self.texsize.addItem("4096", 4096)
+        self.texsize.setCurrentIndex(2)
+        self.texsize.setToolTip("Texture resolution. Lower is smaller files, faster loads.")
+        mesh_row1.addWidget(self.texsize)
+        mesh_row1.addStretch(1)
+        mesh_form.addLayout(mesh_row1)
+
+        mesh_row2 = QHBoxLayout()
+        self.remesh_check = QCheckBox("Remesh (cleaner topology, slower)")
+        self.remesh_check.setChecked(True)
+        self.remesh_check.setToolTip(
+            "Rebuilds the mesh topology for cleaner edge flow. "
+            "Uncheck for faster export with rougher topology.")
+        mesh_row2.addWidget(self.remesh_check)
+        mesh_row2.addStretch(1)
+        mesh_form.addLayout(mesh_row2)
+
+        form.addWidget(mesh_box)
 
         self.gen_btn = QPushButton("Generate 3D model")
         self.gen_btn.setMinimumHeight(40)
@@ -324,11 +363,15 @@ class GenerateTab(QWidget):
         # Use the conda env's python directly instead of `conda run`:
         # no shell init needed, immune to PATH/login-shell issues.
         env_python = f"{self.runner.home}/miniconda3/envs/{CONDA_ENV}/bin/python"
+        density = self.density.currentData()
+        texsize = self.texsize.currentData()
+        no_remesh = "" if self.remesh_check.isChecked() else " --no-remesh"
         cmd = (
             f"cd {TRELLIS_WSL_DIR} && "
             f"{sh_escape(env_python)} {RUNNER_WSL_PATH} "
             f"{sh_escape(in_wsl)} {sh_escape(out_wsl)} "
-            f"--pipeline-type {sh_escape(ptype)} --seed {seed}"
+            f"--pipeline-type {sh_escape(ptype)} --seed {seed} "
+            f"--decimation-target {density} --texture-size {texsize}{no_remesh}"
         )
         self.append_log(f"$ {cmd}")
         self.set_progress(0, "Starting...")

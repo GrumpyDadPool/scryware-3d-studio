@@ -26,6 +26,12 @@ def main():
     ap.add_argument("output_glb")
     ap.add_argument("--pipeline-type", default="512", choices=["512", "1024", "1024_cascade", "1536_cascade"])
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--decimation-target", type=int, default=1000000,
+                    help="Target face count for the output mesh")
+    ap.add_argument("--texture-size", type=int, default=4096,
+                    help="Texture resolution (1024, 2048, 4096)")
+    ap.add_argument("--no-remesh", action="store_true",
+                    help="Skip remeshing (faster, rougher topology)")
     args = ap.parse_args()
 
     from PIL import Image
@@ -64,9 +70,9 @@ def main():
         attr_layout=mesh.layout,
         voxel_size=mesh.voxel_size,
         aabb=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]],
-        decimation_target=1000000,
-        texture_size=4096,
-        remesh=True,
+        decimation_target=args.decimation_target,
+        texture_size=args.texture_size,
+        remesh=not args.no_remesh,
         remesh_band=1,
         remesh_project=0,
         verbose=True,

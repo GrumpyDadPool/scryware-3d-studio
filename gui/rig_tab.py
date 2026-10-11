@@ -9,18 +9,15 @@ import os
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog,
-    QTextEdit, QProgressBar, QGroupBox,
+    QTextEdit, QProgressBar, QGroupBox, QCheckBox,
 )
 
 from backend.wsl_bridge import win_to_wsl, sh_escape
 
 SKINTOKENS_WSL_DIR = "~/SkinTokens"
-# Command template run inside the SkinTokens dir. {input} / {output} are WSL paths.
 # Verified 2026-10-10: demo.py with --use_transfer preserves texture and scale.
 # Uses .venv/bin/python directly to avoid conda/venv PATH stacking issues.
-RIG_CMD_TEMPLATE = (
-    ".venv/bin/python demo.py --input {input} --output {output} --use_transfer"
-)
+# (Command is now built in start_rig with the transfer checkbox state.)
 
 
 class RigTab(QWidget):
@@ -84,6 +81,16 @@ class RigTab(QWidget):
         self.file_label.setWordWrap(True)
         row.addWidget(self.file_label, 1)
         root.addLayout(row)
+
+        opt_row = QHBoxLayout()
+        self.transfer_check = QCheckBox("Preserve texture and scale (--use_transfer)")
+        self.transfer_check.setChecked(True)
+        self.transfer_check.setToolTip(
+            "Keeps the original texture and model scale on the rigged output. "
+            "Uncheck if you want SkinTokens' default material handling.")
+        opt_row.addWidget(self.transfer_check)
+        opt_row.addStretch(1)
+        root.addLayout(opt_row)
 
         self.rig_btn = QPushButton("Rig character")
         self.rig_btn.setMinimumHeight(40)
@@ -159,7 +166,11 @@ class RigTab(QWidget):
 
         in_wsl = win_to_wsl(self.input_path)
         out_wsl = win_to_wsl(out_win)
-        cmd = RIG_CMD_TEMPLATE.format(input=sh_escape(in_wsl), output=sh_escape(out_wsl))
+        transfer = " --use_transfer" if self.transfer_check.isChecked() else ""
+        cmd = (
+            f".venv/bin/python demo.py --input {sh_escape(in_wsl)}"
+            f" --output {sh_escape(out_wsl)}{transfer}"
+        )
 
         self.log.clear()
         self.log.append(f"$ {cmd}")
