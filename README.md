@@ -94,6 +94,26 @@ shows setup guidance instead of failing. Once installed: pick a `.glb`, rig it.
 Log in once, upload your rigged character (FBX), pick animations, download —
 files land in your output folder automatically.
 
+## In production
+
+This is the tool that built the Doomsday Tycoon henchman cast as 3D
+models (Oct-Nov 2026): Gus first as the pipeline proof, then Brick,
+Cipher, Comet, Flare, Marla, Meltdown, Preston, and Spin, plus a Vex
+redo built from corrected canon art. The settings that run standardized
+on: pipeline type 512, seed 42, and concept art drawn front-on in an
+A-pose on white, generated from the character's locked art.
+
+The method notes from that run (working chain, review gates, cleanup
+fixes) live in `docs/game-ready-pipeline-spec.md`, Production update
+section.
+
+## Samples
+
+`samples/` holds the input images for three finished models (Gus,
+Brick, Marla v2). The `.glb` outputs are too big for the repo and ride
+in the v1.0 release zip. See `samples/SAMPLES.md` for what to compare
+against.
+
 ## Notes / limits (v1)
 
 - Mixamo upload is manual in v1 (click through their UI in the embedded browser).
@@ -101,6 +121,52 @@ files land in your output folder automatically.
 - Single-image 3D guesses the back of the subject. Try several seeds; for hero
   assets, clean up in Blender from the generated mesh as a starting point.
 - The app auto-detects your WSL distro (prefers Ubuntu-22.04, then Ubuntu).
+
+## Troubleshooting
+
+Real failures from production use, with the fix that worked.
+
+- **Model weights fail to download and the error does not say why.**
+  The gated DINOv3 license has not been accepted yet. Accept it on the
+  model page first (see "What you need before installing"), then rerun.
+- **Generate stalls right after launch.** WSL cold boot takes 10-30s.
+  The app warms WSL in the background and keeps the Generate/Rig
+  buttons locked until it is ready. Give it a moment.
+- **The mesh comes out flat, like a pancake.** Dark subject on a dark
+  background. Keep background removal on (it composites on white) and
+  prefer light, plain backgrounds in the source art.
+- **Floating blobs, discs, or shell patches hover on the mesh.** A
+  known TRELLIS artifact: layered shell patches that sit off the
+  surface. Fix in Blender by deleting the faces that project onto the
+  artifact's area in a render (screen-coverage selection). Island,
+  centroid, and depth-band selection all miss these patches. Keep a
+  copy of the file before the fix, and verify with an alpha-component
+  scan of a turntable render: only the body component should remain.
+- **The rigged GLB has no textures and is the wrong size.** That is
+  normal SkinTokens output: re-meshed, untextured, normalized to a
+  -1..1 cube (2x the TRELLIS export's scale), sometimes with a stray
+  Icosphere helper object in it. Delete the helper, scale the textured
+  mesh x2, and move the weights onto the textured TRELLIS mesh in
+  Blender with a BVH nearest-face barycentric transfer (target: 100%
+  coverage). Do not use Blender's Data Transfer modifier for this: it
+  can finish with zero weight groups and no error.
+- **The character faces the wrong way.** TRELLIS exports are not
+  consistently oriented (one cast member sat 9-40 degrees off the
+  family profile). Check a neutral-pose render, then correct the
+  armature object's Z rotation in Blender. Set the armature's
+  rotation_mode to XYZ first: in quaternion mode, euler rotation edits
+  are silently dropped on save.
+- **"Bad GLB: file size doesn't match" in Blender.** The GLB was still
+  being copied when it was opened. Wait for the copy to finish and
+  check the final file size before opening it.
+- **A backpack or appendage stretches during animation.** Pin its
+  vertices rigid to the chest bone (full weight). Fixed Comet's
+  life-support backpack this way.
+- **Colors drift from the concept art.** Single-image generation
+  invents texture detail: a purple blazer came out near-black on one
+  model, another suit picked up green mossy patches. If the look
+  matters, generate the concept from the character's original art
+  instead of a text description, and judge the model against that art.
 
 ## Project layout
 
@@ -110,6 +176,7 @@ scryware-3d-studio/
   install.ps1             # one-shot installer with pre-flight popup
   requirements.txt
   assets/icon.ico         # app icon
+  samples/                # input images + notes for three finished models
   backend/
     wsl_bridge.py         # wsl.exe wrapper, path translation, file deploy
   gui/

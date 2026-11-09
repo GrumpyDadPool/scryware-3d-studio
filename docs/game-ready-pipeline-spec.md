@@ -101,6 +101,79 @@ on approval. Everything else runs unattended.
 - **M3** — Game-Ready tab with checkpoint UX wired to `wsl_bridge`.
 - **M4** — Engine export presets (Unreal / Unity / Godot-Roblox).
 
+## Production update — Nov 2026
+
+The v1 pipeline has now run a full production pass: the Doomsday
+Tycoon henchman cast, built as 3D models on this stack during
+Oct-Nov 2026. Gus was the proof run; Brick, Cipher, Comet, Flare,
+Marla, Meltdown, Preston, and Spin followed and were approved as base
+models, and a Vex redo was built from corrected canon art. This section
+records how the chain actually runs in practice, which differs from
+the v1 sketch above in one structural way: the rig is never used
+directly. Its weights are transferred back onto the textured TRELLIS
+mesh, and that mesh is the working asset.
+
+### The chain as actually run
+
+1. **Concept** — generated from the character's locked art: front
+   view, A-pose, smooth painted style, plain white background.
+2. **Generate** — TRELLIS.2, pipeline type 512, seed 42 (the settings
+   the whole cast run standardized on). Textured GLB out, roughly
+   700k verts / 1.4M faces at this size.
+3. **Rig** — SkinTokens. Treat its output as a weight source only: it
+   is re-meshed, untextured, normalized to a -1..1 cube at 2x the
+   TRELLIS export scale, and can carry a stray Icosphere helper
+   object that needs deleting.
+4. **Weight transfer** — in Blender: scale the textured mesh x2 and
+   transfer the rig weights onto it with a BVH nearest-face
+   barycentric transfer. Gate: 100% vertex weight coverage, verified
+   before anything downstream. (Blender's Data Transfer modifier is
+   not used: it returned zero groups with no error.)
+5. **Review gates** — a 24-frame turntable render per character,
+   checked by eye plus an alpha-component scan of every frame for
+   detached pieces. Yaw check on a neutral pose (TRELLIS exports are
+   not consistently oriented). Cleanup passes as needed, always with
+   a pre-fix backup kept beside the working file.
+6. **Approval** — the model is judged against the locked concept art,
+   not against a text description of the character.
+
+### Standing rules for rendered sets
+
+- **Face-on camera (2026-11-07).** Sprite sets rendered from these
+  models are animated from a front camera, not side profile: at app
+  size the face and costume details stay legible where a profile goes
+  dark. The earlier profile sets are superseded as the form. The
+  separate 2D painted sprite program is unaffected.
+- **Prop-hand rule (2026-11-06).** A held prop or weapon stays in the
+  same hand in every frame and across ranks, unless the animation is
+  an explicit hand-off. Every candidate batch carries a prop-hand
+  audit in its NOTES.md. Held props are not modeled by TRELLIS; they
+  are a separate later pass.
+
+### Iteration lessons
+
+- **Vex.** The first Vex model was built from a text-driven concept
+  (a screen-faced hacker with terminal text) and was rejected as Vex:
+  it did not match the character. The redo generated its concept
+  directly from the rank-portrait art (deep purple hooded robe, face
+  fully shadowed) and matched. The rejected model is kept; it may
+  serve as a different villain.
+- **Marla.** Same failure, same fix: the v1 concept drifted from her
+  art, so v2's concept was drawn from the original art and the model
+  rebuilt from that.
+- Rule of thumb from both: if a model reads wrong, redo the concept
+  from the locked art. Do not try to fix identity at the mesh stage.
+
+### Status
+
+As of 2026-11-07, the 3D-rendered animation route is parked by
+Kevin's call: the approved models stand as models, and animation work
+returned to the 2D sprite program. The Generate and Rig path above is
+unchanged and remains how new base models get made. The v2 stages in
+this spec (remesh, bake, LOD, normalize) are still the target for
+engine-ready meshes; mesh density is the known blocker there, per the
+drip-goku review that motivated this spec.
+
 ## Open questions for Kevin
 
 1. Target engine(s)? (drives bone naming, units, export preset)
