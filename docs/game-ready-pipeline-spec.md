@@ -14,9 +14,9 @@ and engine export. This milestone closes that gap.
 
 ## Current pipeline (v1)
 
-1. **Generate** — TRELLIS.2 in WSL2 (`wsl/run_trellis.py` via `backend/wsl_bridge.py`)
+1. **Generate**: TRELLIS.2 in WSL2 (`wsl/run_trellis.py` via `backend/wsl_bridge.py`)
    → textured GLB. Decimation presets: 25k / 100k / 1M. Remesh toggle on.
-2. **Rig** — SkinTokens in WSL2 with `--use_transfer` → rigged GLB.
+2. **Rig**: SkinTokens in WSL2 with `--use_transfer` → rigged GLB.
 3. **Animate** — embedded Mixamo browser, manual download to project folder.
 
 ## Target pipeline (v2)
@@ -101,7 +101,7 @@ on approval. Everything else runs unattended.
 - **M3** — Game-Ready tab with checkpoint UX wired to `wsl_bridge`.
 - **M4** — Engine export presets (Unreal / Unity / Godot-Roblox).
 
-## Production update — Nov 2026
+## Production update, Nov 2026
 
 The v1 pipeline has now run a full production pass: the Doomsday
 Tycoon henchman cast, built as 3D models on this stack during
@@ -115,26 +115,26 @@ mesh, and that mesh is the working asset.
 
 ### The chain as actually run
 
-1. **Concept** — generated from the character's locked art: front
+1. **Concept**: generated from the character's locked art: front
    view, A-pose, smooth painted style, plain white background.
-2. **Generate** — TRELLIS.2, pipeline type 512, seed 42 (the settings
+2. **Generate**: TRELLIS.2, pipeline type 512, seed 42 (the settings
    the whole cast run standardized on). Textured GLB out, roughly
    700k verts / 1.4M faces at this size.
-3. **Rig** — SkinTokens. Treat its output as a weight source only: it
+3. **Rig**: SkinTokens. Treat its output as a weight source only: it
    is re-meshed, untextured, normalized to a -1..1 cube at 2x the
    TRELLIS export scale, and can carry a stray Icosphere helper
    object that needs deleting.
-4. **Weight transfer** — in Blender: scale the textured mesh x2 and
+4. **Weight transfer**: in Blender: scale the textured mesh x2 and
    transfer the rig weights onto it with a BVH nearest-face
    barycentric transfer. Gate: 100% vertex weight coverage, verified
    before anything downstream. (Blender's Data Transfer modifier is
    not used: it returned zero groups with no error.)
-5. **Review gates** — a 24-frame turntable render per character,
+5. **Review gates**: a 24-frame turntable render per character,
    checked by eye plus an alpha-component scan of every frame for
    detached pieces. Yaw check on a neutral pose (TRELLIS exports are
    not consistently oriented). Cleanup passes as needed, always with
    a pre-fix backup kept beside the working file.
-6. **Approval** — the model is judged against the locked concept art,
+6. **Approval**: the model is judged against the locked concept art,
    not against a text description of the character.
 
 ### Standing rules for rendered sets

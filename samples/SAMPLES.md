@@ -13,7 +13,7 @@ single-image run.
 All three used pipeline type 512 and seed 42, the settings the whole cast
 run standardized on.
 
-## Gus — `gus-concept.png` → `gus.glb`
+## Gus: `gus-concept.png` → `gus.glb`
 
 The pipeline proof, 2026-11-06. The concept was generated from Gus's
 locked portrait: front view, A-pose, smooth painted style, white
@@ -23,7 +23,7 @@ back onto this textured mesh in Blender at 100% coverage. Start here:
 if your install reproduces a mesh of this quality from this image, the
 pipeline is healthy.
 
-## Brick — `brick-concept.png` → `brick.glb`
+## Brick: `brick-concept.png` → `brick.glb`
 
 Approved cast model, 2026-11-06. SkinTokens rig: 28 bones. This is the
 character whose working file grew a floating shell artifact beside her
@@ -33,7 +33,7 @@ of the turntable. If your own outputs grow floating patches, see
 Troubleshooting in the README before reaching for island selection: it
 does not catch these.
 
-## Marla v2 — `marla2-concept.png` → `marla2.glb`
+## Marla v2: `marla2-concept.png` → `marla2.glb`
 
 The redo. The first Marla concept had drifted away from her art, so the
 v2 concept was drawn from her original art instead, and the model was
