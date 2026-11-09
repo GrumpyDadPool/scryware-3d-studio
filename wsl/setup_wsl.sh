@@ -84,21 +84,10 @@ echo "--- applying SDPA attention patch ---"
 conda run -n trellis2 python "$SCRIPT_DIR/patch_sdpa.py"
 
 # DINOv3 compat fix: self.model.layer -> self.model.model.layer
+# in trellis2/modules/image_feature_extractor.py (the installed
+# transformers build nests the DINOv3 encoder one level deeper)
 echo "--- applying DINOv3 compat fix ---"
-DINO_FILE=$(conda run -n trellis2 python -c \
-    "import trellis2, os; print(os.path.dirname(trellis2.__file__))" \
-    2>/dev/null)/models/dinov3.py 2>/dev/null || true
-if [ -n "${DINO_FILE:-}" ] && [ -f "$DINO_FILE" ]; then
-    if grep -q "self\.model\.layer" "$DINO_FILE" \
-        && ! grep -q "self\.model\.model\.layer" "$DINO_FILE"; then
-        sed -i 's/self\.model\.layer/self.model.model.layer/g' "$DINO_FILE"
-        echo "patched $DINO_FILE"
-    else
-        echo "DINOv3 fix already applied or not needed"
-    fi
-else
-    echo "WARNING: could not locate dinov3.py, skipping DINO fix"
-fi
+conda run -n trellis2 python "$SCRIPT_DIR/patch_dinov3.py"
 
 # ---------- SkinTokens ----------
 if [ ! -d "$HOME/SkinTokens" ]; then

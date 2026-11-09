@@ -1,0 +1,52 @@
+diff --git a/trellis2/modules/image_feature_extractor.py b/trellis2/modules/image_feature_extractor.py
+index c3cb515..987a60c 100644
+--- a/trellis2/modules/image_feature_extractor.py
++++ b/trellis2/modules/image_feature_extractor.py
+@@ -83,7 +83,7 @@ class DinoV3FeatureExtractor:
+         hidden_states = self.model.embeddings(image, bool_masked_pos=None)
+         position_embeddings = self.model.rope_embeddings(image)
+ 
+-        for i, layer_module in enumerate(self.model.layer):
++        for i, layer_module in enumerate(self.model.model.layer):
+             hidden_states = layer_module(
+                 hidden_states,
+                 position_embeddings=position_embeddings,
+diff --git a/trellis2/modules/sparse/attention/full_attn.py b/trellis2/modules/sparse/attention/full_attn.py
+index 4eb74d2..4b60b2c 100644
+--- a/trellis2/modules/sparse/attention/full_attn.py
++++ b/trellis2/modules/sparse/attention/full_attn.py
+@@ -211,6 +211,21 @@ def sparse_scaled_dot_product_attention(*args, **kwargs):
+             max_q_seqlen = max(q_seqlen)
+             max_kv_seqlen = max(kv_seqlen)
+         out = flash_attn_3.flash_attn_varlen_func(q, k, v, cu_seqlens_q, cu_seqlens_kv, max_q_seqlen, max_kv_seqlen)
++    elif config.ATTN == 'sdpa':
++        from torch.nn.functional import scaled_dot_product_attention as _sdpa
++        if num_all_args == 1: q, k, v = qkv.unbind(dim=1)
++        elif num_all_args == 2: k, v = kv.unbind(dim=1)
++        # SDPA fallback: standard attention per batch element (no flash_attn/xformers).
++        _q_splits = torch.split(q, q_seqlen, dim=0)
++        _k_splits = torch.split(k, kv_seqlen, dim=0)
++        _v_splits = torch.split(v, kv_seqlen, dim=0)
++        _outs = []
++        for _qi, _ki, _vi in zip(_q_splits, _k_splits, _v_splits):
++            _o = _sdpa(_qi.transpose(0, 1).unsqueeze(0),
++                       _ki.transpose(0, 1).unsqueeze(0),
++                       _vi.transpose(0, 1).unsqueeze(0))
++            _outs.append(_o.squeeze(0).transpose(0, 1))
++        out = torch.cat(_outs, dim=0)
+     else:
+         raise ValueError(f"Unknown attention module: {config.ATTN}")
+     
+diff --git a/trellis2/modules/sparse/config.py b/trellis2/modules/sparse/config.py
+index a5f4d53..1f62cc7 100644
+--- a/trellis2/modules/sparse/config.py
++++ b/trellis2/modules/sparse/config.py
+@@ -21,7 +21,7 @@ def __from_env():
+         CONV = env_sparse_conv_backend
+     if env_sparse_debug is not None:
+         DEBUG = env_sparse_debug == '1'
+-    if env_sparse_attn_backend is not None and env_sparse_attn_backend in ['xformers', 'flash_attn', 'flash_attn_3']:
++    if env_sparse_attn_backend is not None and env_sparse_attn_backend in ['xformers', 'flash_attn', 'flash_attn_3', 'sdpa']:
+         ATTN = env_sparse_attn_backend
+         
+     print(f"[SPARSE] Conv backend: {CONV}; Attention backend: {ATTN}")
