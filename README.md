@@ -94,6 +94,27 @@ shows setup guidance instead of failing. Once installed: pick a `.glb`, rig it.
 Log in once, upload your rigged character (FBX), pick animations, download —
 files land in your output folder automatically.
 
+## Optional: PixelLab MCP for your AI assistant
+
+The repo ships a `.mcp.json` in the root that wires the
+[PixelLab](https://pixellab.ai) MCP server into AI coding assistants
+(Claude Code, Cursor, VS Code) opened on this project. That gives the
+assistant the PixelLab pixel-art tools (characters, objects, tilesets,
+animation) for generating concept and reference art while you work.
+
+Setup is one step: the config reads your token from an environment
+variable, so no secret lives in the repo.
+
+1. Get your API token at https://api.pixellab.ai/mcp
+2. Set it as a user environment variable named `PIXELLAB_API_TOKEN`
+   (Windows: Settings → Environment Variables, or
+   `setx PIXELLAB_API_TOKEN "your-token"` in a terminal)
+3. Restart your assistant so it picks up the variable and the config
+
+**Never paste a real token into `.mcp.json` and commit it.** This repo
+is public; the committed file must keep the `${PIXELLAB_API_TOKEN}`
+placeholder.
+
 ## In production
 
 This is the tool that built the Doomsday Tycoon henchman cast as 3D
@@ -175,6 +196,7 @@ scryware-3d-studio/
   main.py                 # entry point (Windows)
   install.ps1             # one-shot installer with pre-flight popup
   requirements.txt
+  .mcp.json               # PixelLab MCP server for AI assistants (token via env var)
   assets/icon.ico         # app icon
   samples/                # input images + notes for three finished models
   backend/
