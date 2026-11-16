@@ -19,6 +19,21 @@ and engine export. This milestone closes that gap.
 2. **Rig**: SkinTokens in WSL2 with `--use_transfer` → rigged GLB.
 3. **Animate** — embedded Mixamo browser, manual download to project folder.
 
+The WSL setup applies two compatibility patches to the TRELLIS.2
+install, both run by `wsl/setup_wsl.sh`:
+
+- `wsl/patch_sdpa.py` — swaps sparse attention to PyTorch SDPA, so no
+  flash_attn or xformers build is needed.
+- `wsl/patch_dinov3.py` — DINOv3 encoder nesting fix
+  (`self.model.layer` → `self.model.model.layer` in
+  `trellis2/modules/image_feature_extractor.py`); the installed
+  transformers build nests the encoder one level deeper than
+  TRELLIS.2 expects.
+
+`wsl/trellis2-local-patches.diff` holds both changes as one captured
+diff, kept as a reference copy if the patch scripts ever need
+re-checking against a fresh TRELLIS.2 clone.
+
 ## Target pipeline (v2)
 
 ### Stage 1 — Quad remesh (Instant Meshes)
