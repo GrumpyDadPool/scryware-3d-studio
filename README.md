@@ -210,4 +210,6 @@ scryware-3d-studio/
     run_trellis.py        # deployed into WSL, runs the actual pipeline
     setup_wsl.sh          # full WSL env setup (conda, TRELLIS.2, SkinTokens)
     patch_sdpa.py         # SDPA sparse-attention patch for TRELLIS.2
+    patch_dinov3.py       # DINOv3 encoder nesting compat fix for TRELLIS.2
+    trellis2-local-patches.diff  # both TRELLIS.2 patches as one diff (reference copy)
 ```
