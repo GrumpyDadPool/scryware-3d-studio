@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from backend.wsl_bridge import win_to_wsl, sh_escape
+from backend.machine_profile import recommended_quality
 
 # Where run_trellis.py lives inside WSL after deploy
 RUNNER_WSL_PATH = "~/miniconda3/TRELLIS.2/scryware_run_trellis.py"
@@ -139,6 +140,13 @@ class GenerateTab(QWidget):
         self.quality.addItem("Medium (1024)", "1024")
         self.quality.addItem("High (1024 cascade)", "1024_cascade")
         self.quality.addItem("Ultra (1536 cascade)", "1536_cascade")
+        # Default to the quality install.ps1 recommended for this PC's
+        # GPU (machine-profile.json); absent a profile, stay on Fast.
+        _profile_quality = recommended_quality()
+        if _profile_quality:
+            _profile_idx = self.quality.findData(_profile_quality)
+            if _profile_idx >= 0:
+                self.quality.setCurrentIndex(_profile_idx)
         row3.addWidget(self.quality)
         row3.addWidget(QLabel("Seed:"))
         self.seed = QSpinBox()

@@ -16,11 +16,19 @@ The installer **pops up a pre-flight checklist first** — read it. It covers wh
 gets installed, the hardware you need, and every approval it will ask for.
 Nothing runs until you click "Install".
 
+The installer probes your PC first (RAM, CPU, GPU/VRAM, free disk) and
+adapts to it. The pre-flight popup shows the detected figures with a
+status per item, instead of a generic checklist.
+
 What it does on approval:
 1. Ensures WSL2 + Ubuntu-22.04 (may need one reboot on first run)
-2. Writes `%USERPROFILE%\.wslconfig` — 24 GB RAM / 8 GB swap for the models
+2. Writes `%USERPROFILE%\.wslconfig` — memory, swap, and processors
+   sized from your detected hardware (about 70% of system RAM, capped)
 3. Inside WSL: miniconda, `trellis2` conda env, TRELLIS.2 (patched), SkinTokens venv
 4. `pip install -r requirements.txt` for the Windows GUI
+5. Writes `machine-profile.json` next to the app with the detected
+   hardware, so the Generate tab defaults to a quality your GPU can
+   handle (20+ GB VRAM: Medium 1024; 12-20 GB: Fast 512)
 
 Then launch:
 
@@ -32,7 +40,10 @@ python main.py
 
 - Windows 10 (21H2+) or 11, 64-bit
 - Virtualization enabled in BIOS/UEFI (WSL2 requirement)
-- NVIDIA GPU with ~24 GB VRAM (e.g. RTX 4090) + current driver with WSL CUDA support
+- NVIDIA GPU + current driver with WSL CUDA support. VRAM sets the
+  usable quality tier: 20 GB or more for the 1024 tiers, about 12 GB
+  for Fast (512); below that, generation may run out of memory. The
+  installer detects your card and sets the default to match.
 - ~50 GB free disk space
 - Administrator rights (WSL install needs it)
 - Stable internet — ~35 GB of downloads (PyTorch, model weights)
@@ -201,6 +212,7 @@ scryware-3d-studio/
   samples/                # input images + notes for three finished models
   backend/
     wsl_bridge.py         # wsl.exe wrapper, path translation, file deploy
+    machine_profile.py    # reads machine-profile.json (the installer's hardware probe)
   gui/
     main_window.py        # tab shell
     generate_tab.py       # image -> TRELLIS.2 -> .glb
