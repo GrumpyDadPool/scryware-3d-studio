@@ -74,7 +74,7 @@ pip install -r requirements.txt
 - miniconda, conda env `trellis2` (python 3.10)
 - `torch==2.6.0` cu124, `cuda-nvcc` from `nvidia/label/cuda-12.4.0`
 - Clone TRELLIS.2, run `wsl/patch_sdpa.py` (SDPA attention, no flash_attn needed),
-  apply the DINOv3 fix (`self.model.layer` -> `self.model.model.layer`)
+  run `wsl/patch_dinov3.py` (DINOv3 encoder nesting fix)
 - Clone SkinTokens to `~/SkinTokens`, python 3.11 venv, `torch==2.7.0` cu128,
   `flash-attn==2.8.3.post1`, `scipy`
 
@@ -143,7 +143,7 @@ section.
 
 `samples/` holds the input images for three finished models (Gus,
 Brick, Marla v2). The `.glb` outputs are too big for the repo and ride
-in the v1.0 release zip. See `samples/SAMPLES.md` for what to compare
+in the release zip. See `samples/SAMPLES.md` for what to compare
 against.
 
 ## Notes / limits (v1)
@@ -199,6 +199,15 @@ Real failures from production use, with the fix that worked.
   model, another suit picked up green mossy patches. If the look
   matters, generate the concept from the character's original art
   instead of a text description, and judge the model against that art.
+- **Generate opens on Fast (512) even on a strong GPU.** The default
+  quality comes from `machine-profile.json`, which install.ps1 writes
+  from its hardware probe. If the file is missing (manual install) or
+  stale (you changed GPUs), re-run install.ps1, or edit the
+  `recommended_quality` value in that file by hand.
+- **Your AI assistant doesn't see the PixelLab tools.** The repo's
+  `.mcp.json` reads the token from a `PIXELLAB_API_TOKEN` environment
+  variable. Set it (see "PixelLab MCP" above) and restart the
+  assistant; a variable set after the assistant started is not seen.
 
 ## Project layout
 

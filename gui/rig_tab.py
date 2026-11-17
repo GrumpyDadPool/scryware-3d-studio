@@ -63,8 +63,8 @@ class RigTab(QWidget):
         self.sk_status = QLabel("Checking...")
         sb.addWidget(self.sk_status)
         self.setup_hint = QLabel(
-            "SkinTokens isn't installed yet. Follow the setup guide "
-            "(trellis-setup-guide.md, 'Auto-rigging' section), then press Re-check."
+            "SkinTokens isn't installed yet. Run install.ps1 (or "
+            "wsl/setup_wsl.sh inside WSL) to install it, then press Re-check."
         )
         self.setup_hint.setWordWrap(True)
         sb.addWidget(self.setup_hint)

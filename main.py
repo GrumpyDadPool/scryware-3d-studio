@@ -11,8 +11,9 @@ Run on Windows:
     python main.py
 
 Prerequisites:
-  - WSL2 with Ubuntu + the TRELLIS.2 setup from trellis-setup-guide.md
-    (conda env 'trellis2', repo at ~/miniconda3/TRELLIS.2, SDPA patch applied)
+  - WSL2 with Ubuntu + the TRELLIS.2 setup from install.ps1 /
+    wsl/setup_wsl.sh (conda env 'trellis2', repo at ~/miniconda3/TRELLIS.2,
+    SDPA and DINOv3 patches applied)
   - Python 3.10+ on Windows
 """
 import sys

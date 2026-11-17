@@ -4,7 +4,7 @@ Three finished Generate outputs from the Doomsday Tycoon cast run
 (Oct-Nov 2026), so a new install has something to check itself against.
 
 The input images are in this folder. The matching `.glb` outputs are
-35-37 MB each, too big for the repo, so they ride in the v1.0 release zip
+35-37 MB each, too big for the repo, so they ride in the release zip
 under `samples/glb/`. Open one next to its concept image: proportions,
 silhouette, and the face should read true to the concept at turntable
 distance. Texture detail on the back is the model's guess, same as any
